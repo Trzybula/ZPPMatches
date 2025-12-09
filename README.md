@@ -7,6 +7,7 @@ A Rust-based matching system implementing the Gale-Shapley stable matching algor
 - Algorithm: Gale-Shapley
 - Data Storage: JSON file (state.json)
 
+## Setup:
 Run backend:
 - cd backend
 - cargo run
