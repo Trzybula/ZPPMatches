@@ -31,7 +31,7 @@ make_request() {
 
 echo -e "${YELLOW}Cleaning up...${NC}"
 rm -f backend/state.json 2>/dev/null
-echo "✅ Old state removed"
+echo "Old state removed"
 echo
 
 # 1. REGISTER GROUPS
