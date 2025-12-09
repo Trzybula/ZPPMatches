@@ -1,4 +1,4 @@
-# ZPPMatches
+# ZPPMatches SUBMISSION
 A Rust-based matching system implementing the Gale-Shapley stable matching algorithm. The system matches student groups with companies based on mutual preferences.
 
 ## Architecture
