@@ -8,14 +8,15 @@ A Rust-based matching system implementing the Gale-Shapley stable matching algor
 - Data Storage: JSON file (state.json)
 
 ## Setup:
-### Run backend:
-- cd backend
-- cargo run
 
 ### Prepare mock data:
 - cd backend
 - bash setup_test.sh
 (for now we keep data in state.json)
+
+### Run backend:
+- cd backend
+- cargo run
 
 ### Run frontend:
 - cd frontend
