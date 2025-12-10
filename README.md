@@ -24,7 +24,7 @@ A Rust-based matching system implementing the Gale-Shapley stable matching algor
 ## Features:
 - Login for companies and groups (for now adding only through CURL),
 - Dashboards
-- Matching algorithm (for now some companies may have more groups than just 1, but
+- Matching algorithm (for now some companies may have more groups than just one, but
 in the second iteration it would be bijection between companies' projects(TODO) and groups
 - Matching dashboard
 
