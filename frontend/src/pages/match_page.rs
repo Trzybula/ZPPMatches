@@ -124,7 +124,7 @@ pub fn match_page() -> Html {
                                     <span class="connector">{" ⇆ "}</span>
                                     <span class="company">{ &m.company }</span>
                                 </div>
-                                <div class="match-status">{"✅"}</div>
+                                <div class="match-status">{"MATCHED"}</div>
                             </div>
                         }) }
                     </div>
