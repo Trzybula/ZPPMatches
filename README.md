@@ -33,7 +33,8 @@ in the second iteration it would be a bijection between companies' projects(TODO
 - Adding available companies' projects with their descriptions
 - Projects overview
 - Rankings and preferences that users can manage
-- Algorithm with preferences and ranking, bijection between companies' projects and groups
+- Algorithm with preferences and ranking, bijection between companies' projects and groups.
+- We assume there is at least as much projects as groups (as in real ZPP)
 - Matching rounds
 - Admin panel for managing rounds
 
