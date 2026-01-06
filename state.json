@@ -1,0 +1,149 @@
+{
+  "users": [
+    {
+      "email": "admin@system",
+      "password": "admin",
+      "role": "admin"
+    },
+    {
+      "email": "g",
+      "password": "g",
+      "role": "company"
+    },
+    {
+      "email": "m",
+      "password": "m",
+      "role": "group"
+    },
+    {
+      "email": "p",
+      "password": "p",
+      "role": "group"
+    },
+    {
+      "email": "a",
+      "password": "a",
+      "role": "company"
+    }
+  ],
+  "groups": [
+    {
+      "name": "Mimowcy",
+      "email": "m"
+    },
+    {
+      "name": "Piwniczaki",
+      "email": "p"
+    }
+  ],
+  "companies": [
+    {
+      "name": "Google",
+      "email": "g"
+    },
+    {
+      "name": "Amazon",
+      "email": "a"
+    }
+  ],
+  "projects": [
+    {
+      "id": "42fc0eea-d1a6-4375-9077-ebe19c4d1c5d",
+      "company_email": "g",
+      "name": "Cloud",
+      "description": "chmurka",
+      "capacity": 1,
+      "active": true
+    },
+    {
+      "id": "efa34336-3107-4f0d-b76d-9c7ef2e15b56",
+      "company_email": "g",
+      "name": "Infrastructure",
+      "description": "infra",
+      "capacity": 1,
+      "active": true
+    },
+    {
+      "id": "cddc8edc-7029-43ef-ae2b-d5d34e7274d2",
+      "company_email": "g",
+      "name": "Cybersecurity",
+      "description": "hackerzy",
+      "capacity": 1,
+      "active": true
+    },
+    {
+      "id": "4cd4b8ad-b02b-4157-9204-5643bed8e3d9",
+      "company_email": "a",
+      "name": "AGI",
+      "description": "alexa",
+      "capacity": 1,
+      "active": true
+    }
+  ],
+  "group_prefs": [
+    {
+      "group_email": "m",
+      "project_ids_ranked": [
+        "42fc0eea-d1a6-4375-9077-ebe19c4d1c5d",
+        "cddc8edc-7029-43ef-ae2b-d5d34e7274d2",
+        "efa34336-3107-4f0d-b76d-9c7ef2e15b56"
+      ]
+    },
+    {
+      "group_email": "p",
+      "project_ids_ranked": [
+        "4cd4b8ad-b02b-4157-9204-5643bed8e3d9"
+      ]
+    }
+  ],
+  "project_prefs": [
+    {
+      "project_id": "efa34336-3107-4f0d-b76d-9c7ef2e15b56",
+      "group_emails_ranked": [
+        "m",
+        "p"
+      ]
+    },
+    {
+      "project_id": "cddc8edc-7029-43ef-ae2b-d5d34e7274d2",
+      "group_emails_ranked": [
+        "p"
+      ]
+    },
+    {
+      "project_id": "4cd4b8ad-b02b-4157-9204-5643bed8e3d9",
+      "group_emails_ranked": [
+        "m",
+        "p"
+      ]
+    }
+  ],
+  "sessions": {
+    "fb3ca70b-bc7f-462a-84dd-ab1ad20244c6": {
+      "email": "a",
+      "role": "company"
+    },
+    "7666f00b-47c1-4ead-bc1a-8ab30eb77ca5": {
+      "email": "p",
+      "role": "group"
+    },
+    "8f680210-276e-403a-97fb-aa29e2f15604": {
+      "email": "g",
+      "role": "company"
+    },
+    "8e84235e-066f-418c-b67c-f74830251738": {
+      "email": "m",
+      "role": "group"
+    },
+    "775a42ae-b2f6-418b-80aa-3c1988897df5": {
+      "email": "admin@system",
+      "role": "admin"
+    }
+  },
+  "round_number": 1,
+  "round_open": true,
+  "current_matches": [],
+  "accepted_matches": [],
+  "rejected_pairs": [],
+  "match_decisions": []
+}
