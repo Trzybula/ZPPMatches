@@ -1,13 +1,11 @@
 use yew::prelude::*;
 use gloo_net::http::Request;
-use serde::Deserialize;
 use yew_router::prelude::Link;
 use crate::Route;
+use shared::MatchResult;
 
-#[derive(Deserialize, Clone, Debug)]
-pub struct MatchResult {
-    pub group: String,
-    pub company: String,
+fn api(path: &str) -> String {
+    format!("/api{}", path)
 }
 
 #[function_component(MatchPage)]
@@ -23,7 +21,10 @@ pub fn match_page() -> Html {
 
         use_effect_with((), move |_| {
             wasm_bindgen_futures::spawn_local(async move {
-                match Request::get("http://localhost:3000/match").send().await {
+                loading.set(true);
+                error.set("".to_string());
+
+                match Request::get(&api("/match")).send().await {
                     Ok(resp) => {
                         if resp.ok() {
                             match resp.json::<Vec<MatchResult>>().await {
@@ -38,8 +39,10 @@ pub fn match_page() -> Html {
                         error.set(format!("Network error: {}", e));
                     }
                 }
+
                 loading.set(false);
             });
+
             || ()
         });
     }
@@ -58,7 +61,7 @@ pub fn match_page() -> Html {
             error.set("".to_string());
 
             wasm_bindgen_futures::spawn_local(async move {
-                match Request::get("http://localhost:3000/match").send().await {
+                match Request::get(&api("/match")).send().await {
                     Ok(resp) => {
                         if resp.ok() {
                             match resp.json::<Vec<MatchResult>>().await {
@@ -73,6 +76,7 @@ pub fn match_page() -> Html {
                         error.set(format!("Network error: {}", e));
                     }
                 }
+
                 loading.set(false);
             });
         })
@@ -82,13 +86,18 @@ pub fn match_page() -> Html {
         <div class="match-page">
             <div class="page-header">
                 <h1>{"Matching Results"}</h1>
-                <p class="subtitle">{"Groups matched with companies"}</p>
+                <p class="subtitle">{"Groups matched with projects (company email)"}</p>
             </div>
 
             <div class="controls">
-                <button onclick={refresh_matches} class="btn refresh-btn">
-                    {"Refresh"}
+                <button
+                    onclick={refresh_matches}
+                    class="btn refresh-btn"
+                    disabled={*loading}
+                >
+                    { if *loading { "Loading..." } else { "Refresh" } }
                 </button>
+
                 <Link<Route> to={Route::Home} classes="btn back-btn">
                     {"Home"}
                 </Link<Route>>
@@ -100,37 +109,43 @@ pub fn match_page() -> Html {
                 </div>
             } else if !error.is_empty() {
                 <div class="error-state">
-                    <p>{ "Error:" }</p>
+                    <p><strong>{ "Error:" }</strong></p>
                     <p>{ &*error }</p>
                 </div>
             } else if results.is_empty() {
                 <div class="empty-state">
-                    <p>{"No matches found yet."}</p>
-                    <p>{"Add some groups and companies first!"}</p>
+                    <p>{"No matches yet."}</p>
+                    <p>{"Add preferences and try again."}</p>
                 </div>
             } else {
                 <div class="results-container">
                     <div class="results-header">
                         <h2>{ format!("Found {} matches", results.len()) }</h2>
-                        <p class="algorithm-info">{"Algorithm: Gale-Shapley"}</p>
+                        <p class="algorithm-info">{ "group_email → project (company email)" }</p>
                     </div>
 
                     <div class="matches-list">
                         { for results.iter().enumerate().map(|(i, m)| html! {
-                            <div class="match-item" key={i}>
+                            <div
+                                class="match-item"
+                                key={format!("{}-{}", m.group_email, m.project_id)}
+                            >
                                 <div class="match-number">{ i + 1 }</div>
                                 <div class="match-details">
-                                    <span class="group">{ &m.group }</span>
-                                    <span class="connector">{" ⇆ "}</span>
-                                    <span class="company">{ &m.company }</span>
+                                    <span class="group">{ &m.group_email }</span>
+                                    <span class="connector">{ " ⇆ " }</span>
+                                    <span class="company">{ &m.project_name }</span>
+                                    <span class="email">{ " (mail: " }</span>
+                                    <span class="company">{ &m.company_email }</span>
+                                    <span class="email">{ ")" }</span>
                                 </div>
-                                <div class="match-status">{"MATCHED"}</div>
+                                <div class="match-status">{ "✔️" }</div>
                             </div>
                         }) }
                     </div>
 
                     <div class="summary">
-                        <p>{ "Each group is matched with their most preferred available company." }</p>
+                        <p>{ format!("Total matches: {}", results.len()) }</p>
                     </div>
                 </div>
             }
