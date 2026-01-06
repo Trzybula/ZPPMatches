@@ -11,8 +11,6 @@ A Rust-based matching system implementing the Gale-Shapley stable matching algor
 
 ### Prepare mock data:
 - cd backend
-- bash setup_test.sh
-(for now we keep data in state.json)
 
 ### Run backend:
 - cd backend
@@ -22,20 +20,26 @@ A Rust-based matching system implementing the Gale-Shapley stable matching algor
 - cd frontend
 - trunk serve
 
-## Features:
+## First Iteration Features:
 - Login for companies and groups (for now adding only through CURL),
 - Dashboards
 - Matching algorithm (for now some companies may have more groups than just one, but
 in the second iteration it would be a bijection between companies' projects(TODO) and groups
 - Matching dashboard
 
-## TODO:
+## Second Iteration Features:
+- Unifed login page
 - Registration
-- Adding available companies' projects
+- Adding available companies' projects with their descriptions
+- Projects overview
+- Rankings and preferences that users can manage
+- Algorithm with preferences and ranking, bijection between companies' projects and groups.
+- We assume there is at least as much projects as groups (as in real ZPP)
+- Matching rounds
+- Admin panel for managing rounds
+
+## TODO:
 - Groups overview
-- Companies and projects overview
-- Advanced algorithm with preferences
-- Admin panel
+- Companies overview
 - Database
 - Chat between companies and groups
-- Matching rounds

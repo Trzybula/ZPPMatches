@@ -1,16 +1,20 @@
-mod state;
-mod models;
 mod matching;
+mod models;
 mod routes;
+mod state;
 
-use tower_http::cors::{CorsLayer, Any};
-use axum::{
-    routing::{post, get},
-    Router,
+use axum::Router;
+use axum::routing::{get, post};
+use std::{
+    fs,
+    sync::{Arc, Mutex},
 };
+use tower_http::cors::{Any, CorsLayer};
+
 use state::AppState;
-use std::sync::{Arc, Mutex};
-use std::fs;
+
+const ADMIN_EMAIL: &str = "admin@system";
+const ADMIN_PASSWORD: &str = "admin";
 
 #[tokio::main]
 async fn main() {
@@ -21,36 +25,57 @@ async fn main() {
 
     let state = Arc::new(Mutex::new(
         if let Ok(data) = fs::read_to_string("state.json") {
-            serde_json::from_str(&data).unwrap_or_else(|e| {
-                println!("Error loading state: {}, creating new state", e);
-                AppState::new()
-            })
+            serde_json::from_str(&data).unwrap_or_else(|_| AppState::new())
         } else {
-            println!("No state.json found, creating new state");
             AppState::new()
-        }
+        },
     ));
 
-    let app = Router::new()
+    {
+        let mut s = state.lock().unwrap();
+        if !s.users.iter().any(|u| u.email == ADMIN_EMAIL) {
+            s.users.push(models::AuthUser {
+                email: ADMIN_EMAIL.into(),
+                password: ADMIN_PASSWORD.into(),
+                role: models::Role::Admin,
+            });
+            let _ = s.save();
+        }
+    }
+
+    let api = Router::new()
         .route("/group", post(routes::add_group))
         .route("/company", post(routes::add_company))
-        .route("/match", get(routes::match_groups))
-        .route("/login/group", post(routes::login_group))
-        .route("/login/company", post(routes::login_company))
+        .route("/login", post(routes::login))
         .route("/group/me", get(routes::group_me))
         .route("/company/me", get(routes::company_me))
         .route("/company/list", get(routes::list_companies))
         .route("/group/list", get(routes::list_groups))
-        .route("/group/add_pref", post(routes::group_add_pref))
-        .route("/company/add_pref", post(routes::company_add_pref))
+        .route("/projects", get(routes::list_projects))
+        .route("/company/projects", post(routes::company_add_project))
+        .route("/group/preferences", post(routes::set_group_preferences))
+        .route(
+            "/project/preferences",
+            post(routes::set_project_preferences),
+        )
+        .route("/project/preferences", get(routes::get_project_preferences))
+        .route("/group/preferences", get(routes::get_group_preferences))
+        .route("/match", get(routes::match_groups))
+        .route("/me/match", get(routes::me_match))
+        .route("/me/final", get(routes::me_final))
+        .route("/match/accept", post(routes::match_accept))
+        .route("/match/reject", post(routes::match_reject))
+        .route("/round/status", get(routes::round_status))
+        .route("/admin/status", get(routes::admin_status))
+        .route("/admin/round/start", post(routes::admin_round_start))
+        .route("/admin/round/close", post(routes::admin_round_close));
+
+    let app = Router::new()
+        .nest("/api", api)
         .layer(cors)
         .with_state(state);
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000")
-        .await
-        .unwrap();
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
 
-    println!("Running backend on http://localhost:3000/");
-    
     axum::serve(listener, app).await.unwrap();
 }

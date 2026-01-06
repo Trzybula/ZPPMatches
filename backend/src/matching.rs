@@ -1,79 +1,105 @@
-use crate::models::{Group, Company, MatchResult};
+use crate::models::{Group, GroupPreferences, MatchResult, Project, ProjectPreferences};
 use std::collections::{HashMap, VecDeque};
 
-pub fn stable_matching(groups: &[Group], companies: &[Company]) -> Vec<MatchResult> {
-    if groups.is_empty() || companies.is_empty() {
-        println!("No groups or companies to match");
+pub fn stable_matching(
+    groups: &[Group],
+    projects: &[Project],
+    group_prefs: &[GroupPreferences],
+    project_prefs: &[ProjectPreferences],
+) -> Vec<MatchResult> {
+    if groups.is_empty() || projects.is_empty() {
         return vec![];
     }
-
-    let _group_idx: HashMap<String, usize> = groups.iter()
+    let group_idx: HashMap<&str, usize> = groups
+        .iter()
         .enumerate()
-        .map(|(i, g)| (g.name.clone(), i))
+        .map(|(i, g)| (g.email.as_str(), i))
         .collect();
 
-    let company_idx: HashMap<String, usize> = companies.iter()
+    let project_idx: HashMap<&str, usize> = projects
+        .iter()
         .enumerate()
-        .map(|(i, c)| (c.name.clone(), i))
+        .map(|(i, p)| (p.id.as_str(), i))
         .collect();
+    let mut g_pref_list: Vec<Vec<String>> = vec![vec![]; groups.len()];
+    for gp in group_prefs.iter() {
+        if let Some(&gi) = group_idx.get(gp.group_email.as_str()) {
+            g_pref_list[gi] = gp.project_ids_ranked.clone();
+        }
+    }
 
-    // Normalny Gale-Shapley z preferencjami
-    let mut free_groups: VecDeque<usize> = (0..groups.len()).collect();
-    let mut next_proposal: Vec<usize> = vec![0; groups.len()];
-    let mut company_partner: Vec<Option<usize>> = vec![None; companies.len()];
-    let mut company_score: Vec<HashMap<String, i32>> = vec![HashMap::new(); companies.len()];
-    
-    for (i, c) in companies.iter().enumerate() {
-        for (position, group_name) in c.preferences.iter().enumerate() {
+    let mut project_score: Vec<HashMap<&str, i32>> = vec![HashMap::new(); projects.len()];
+    for (p_idx, _p) in projects.iter().enumerate() {
+        let _ = p_idx;
+    }
+    for pp in project_prefs.iter() {
+        let Some(&p_idx) = project_idx.get(pp.project_id.as_str()) else {
+            continue;
+        };
+
+        for (position, group_email) in pp.group_emails_ranked.iter().enumerate() {
             let base_score = (position as i32 + 1) * 10;
             let mut extra_points = 0;
 
             if position < 3 {
                 extra_points -= 5;
             }
-            if c.preferences.len() <= 2 {
+            if pp.group_emails_ranked.len() <= 2 {
                 extra_points -= 3;
             }
-            
+
             let final_score = base_score + extra_points;
-            company_score[i].insert(group_name.clone(), final_score);
+            project_score[p_idx].insert(group_email.as_str(), final_score);
         }
     }
 
-    // Normalny Gale-Shapley
-    let mut matched_groups = vec![false; groups.len()];
-    
+    let mut free_groups: VecDeque<usize> = (0..groups.len()).collect();
+    let mut next_proposal: Vec<usize> = vec![0; groups.len()];
+    let mut project_partner: Vec<Option<usize>> = vec![None; projects.len()];
+
     while let Some(g_idx) = free_groups.pop_front() {
-        let group = &groups[g_idx];
-        if next_proposal[g_idx] >= group.preferences.len() {
+        if next_proposal[g_idx] >= g_pref_list[g_idx].len() {
             continue;
         }
 
-        let company_name = &group.preferences[next_proposal[g_idx]];
+        let project_id = &g_pref_list[g_idx][next_proposal[g_idx]];
         next_proposal[g_idx] += 1;
 
-        let Some(&c_idx) = company_idx.get(company_name) else {
+        let Some(&p_idx) = project_idx.get(project_id.as_str()) else {
             free_groups.push_back(g_idx);
             continue;
         };
 
-        match company_partner[c_idx] {
+        if !projects[p_idx].active || projects[p_idx].capacity == 0 {
+            free_groups.push_back(g_idx);
+            continue;
+        }
+
+        let group_email = groups[g_idx].email.as_str();
+        if !project_score[p_idx].contains_key(group_email) {
+            free_groups.push_back(g_idx);
+            continue;
+        }
+
+        match project_partner[p_idx] {
             None => {
-                if company_score[c_idx].contains_key(&group.name) {
-                    company_partner[c_idx] = Some(g_idx);
-                    matched_groups[g_idx] = true;
-                } else {
-                    free_groups.push_back(g_idx);
-                }
+                project_partner[p_idx] = Some(g_idx);
             }
             Some(current_g_idx) => {
-                let score_new = company_score[c_idx].get(&group.name).copied().unwrap_or(i32::MAX);
-                let score_old = company_score[c_idx].get(&groups[current_g_idx].name).copied().unwrap_or(i32::MAX);
-                
+                let current_email = groups[current_g_idx].email.as_str();
+
+                let score_new = project_score[p_idx]
+                    .get(group_email)
+                    .copied()
+                    .unwrap_or(i32::MAX);
+
+                let score_old = project_score[p_idx]
+                    .get(current_email)
+                    .copied()
+                    .unwrap_or(i32::MAX);
+
                 if score_new < score_old {
-                    company_partner[c_idx] = Some(g_idx);
-                    matched_groups[g_idx] = true;
-                    matched_groups[current_g_idx] = false;
+                    project_partner[p_idx] = Some(g_idx);
                     free_groups.push_back(current_g_idx);
                 } else {
                     free_groups.push_back(g_idx);
@@ -81,71 +107,19 @@ pub fn stable_matching(groups: &[Group], companies: &[Company]) -> Vec<MatchResu
             }
         }
     }
-    
-    
-    // Wolne grupy
-    let unmatched_groups: Vec<usize> = matched_groups.iter()
-        .enumerate()
-        .filter(|(_, matched)| !**matched)
-        .map(|(idx, _)| idx)
-        .collect();
-    
-    // Wolne firmy
-    let free_companies: Vec<usize> = company_partner.iter() 
-        .enumerate()
-        .filter(|(_, partner)| partner.is_none())
-        .map(|(idx, _)| idx)
-        .collect();
 
-    // Jeśli nie ma wystarczająco wolnych firm, niektóre firmy dostaną 2 grupy
-    let mut extra_assignments = vec![];
-    
-    for (i, &g_idx) in unmatched_groups.iter().enumerate() {
-        let group = &groups[g_idx];
-        
-        if i < free_companies.len() {
-            let c_idx = free_companies[i];
-            company_partner[c_idx] = Some(g_idx);
-            matched_groups[g_idx] = true;
-        } else {
-            let mut best_company = None;
-            let mut best_score = i32::MAX;
-            
-            for c_idx in 0..companies.len() {
-                if let Some(score) = company_score[c_idx].get(&group.name) {
-                    if *score < best_score {
-                        best_score = *score;
-                        best_company = Some(c_idx);
-                    }
-                }
-            }
-            
-            if let Some(c_idx) = best_company {
-                extra_assignments.push((group.name.clone(), companies[c_idx].name.clone()));
-            } else {
-                let c_idx = 0;
-                extra_assignments.push((group.name.clone(), companies[c_idx].name.clone()));
-            }
-        }
-    }
-
-    
     let mut results = Vec::new();
-    
-    for (c_idx, g_idx_opt) in company_partner.iter().enumerate() {
+    for (p_idx, g_idx_opt) in project_partner.iter().enumerate() {
         if let Some(g_idx) = g_idx_opt {
             results.push(MatchResult {
-                group: groups[*g_idx].name.clone(),
-                company: companies[c_idx].name.clone(),
+                group_email: groups[*g_idx].email.clone(),
+                project_id: projects[p_idx].id.clone(),
+                project_name: projects[p_idx].name.clone(),
+                company_email: projects[p_idx].company_email.clone(),
             });
         }
     }
-    for (group_name, company_name) in extra_assignments {
-        results.push(MatchResult {
-            group: group_name,
-            company: company_name,
-        });
-    }
-    results.sort_by(|a, b| a.group.cmp(&b.group));
+
+    results.sort_by(|a, b| a.group_email.cmp(&b.group_email));
     results
 }

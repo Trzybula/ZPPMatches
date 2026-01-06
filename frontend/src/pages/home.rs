@@ -7,16 +7,19 @@ pub fn home_page() -> Html {
     html! {
         <div>
             <h1>{"Welcome to the ZPPMatch"}</h1>
-            <div>
-                <Link<Route> to={Route::LoginGroup}>
-                    <button>{"Login as Group"}</button>
+
+            <div style="margin: 8px 0;">
+                <Link<Route> to={Route::Login}>
+                    <button>{"Login"}</button>
                 </Link<Route>>
             </div>
-            <div>
-                <Link<Route> to={Route::LoginCompany}>
-                    <button>{"Login as Company"}</button>
+
+            <div style="margin: 8px 0;">
+                <Link<Route> to={Route::Register}>
+                    <button>{"Register"}</button>
                 </Link<Route>>
             </div>
         </div>
     }
 }
+

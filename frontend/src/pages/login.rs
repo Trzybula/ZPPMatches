@@ -2,31 +2,28 @@ use yew::prelude::*;
 use gloo_net::http::Request;
 use wasm_bindgen_futures::spawn_local;
 use gloo_storage::{LocalStorage, Storage};
-use serde::Deserialize;
 use web_sys::HtmlInputElement;
+use shared::LoginResponse;
 
-#[derive(Deserialize, Clone, Debug)]
-struct LoginResponse {
-    ok: bool,
-    message: String,
-    session_id: Option<String>,
+fn api(path: &str) -> String {
+    format!("/api{}", path)
 }
 
-#[function_component(LoginCompanyPage)]
-pub fn login_company_page() -> Html {
+#[function_component(LoginPage)]
+pub fn login_page() -> Html {
     let email = use_state(|| "".to_string());
     let password = use_state(|| "".to_string());
     let message = use_state(|| "".to_string());
 
     let on_submit = {
-        let email = email.clone();
-        let password = password.clone();
+        let email_state = email.clone();
+        let password_state = password.clone();
         let message = message.clone();
 
-        Callback::from(move |_| {
-            let email = (*email).clone();
-            let password = (*password).clone();
-            let message = message.clone();
+    Callback::from(move |_| {
+        let email = (*email_state).clone();
+        let password = (*password_state).clone();
+        let message = message.clone();
 
             spawn_local(async move {
                 let body = serde_json::json!({
@@ -34,7 +31,7 @@ pub fn login_company_page() -> Html {
                     "password": password
                 });
 
-                let req = Request::post("http://localhost:3000/login/company")
+                let req = Request::post(&api("/login"))
                     .header("Content-Type", "application/json")
                     .body(body.to_string())
                     .expect("build request");
@@ -45,14 +42,31 @@ pub fn login_company_page() -> Html {
                             message.set(parsed.message.clone());
 
                             if parsed.ok {
-                                if let Some(session) = parsed.session_id {
+                                if let Some(session) = parsed.session_id.clone() {
                                     let _ = LocalStorage::set("session_id", session.clone());
 
-                                    web_sys::window()
-                                        .unwrap()
-                                        .location()
-                                        .set_href(&format!("/dashboard/company?session_id={}", session))
-                                        .unwrap();
+                                    let role = parsed.role.clone().unwrap_or_default().to_lowercase();
+                                    if role == "company" {
+                                        web_sys::window()
+                                            .unwrap()
+                                            .location()
+                                            .set_href(&format!("/dashboard/company?session_id={}", session))
+                                            .unwrap();
+                                    } else if role == "group" {
+                                        web_sys::window()
+                                            .unwrap()
+                                            .location()
+                                            .set_href(&format!("/dashboard/group?session_id={}", session))
+                                            .unwrap();
+                                    } else if role == "admin" {
+                                        web_sys::window()
+                                            .unwrap()
+                                            .location()
+                                            .set_href(&format!("/admin?session_id={}", session))
+                                            .unwrap();
+                                    } else {
+                                        message.set("Login ok but unknown role".into());
+                                    }
                                 }
                             }
                         }
@@ -66,10 +80,11 @@ pub fn login_company_page() -> Html {
 
     html! {
         <div>
-            <h2>{ "Login (Company)" }</h2>
+            <h2>{ "Login" }</h2>
 
             <input
                 placeholder="email"
+                value={(*email).clone()}
                 oninput={{
                     let email = email.clone();
                     Callback::from(move |e: InputEvent| {
@@ -82,6 +97,7 @@ pub fn login_company_page() -> Html {
             <input
                 type="password"
                 placeholder="password"
+                value={(*password).clone()}
                 oninput={{
                     let password = password.clone();
                     Callback::from(move |e: InputEvent| {
